@@ -85,6 +85,7 @@
 - история версий: `CHANGELOG.md`;
 - правила защиты данных: `SECURITY.md`;
 - безопасное обновление и откат: `docs/SAFE-UPDATE.md`;
+- план пилотной эксплуатации и критерии готовности: `docs/PILOT.md`;
 - локальная сборка: `powershell -ExecutionPolicy Bypass -File .\scripts\build-release.ps1 -Version 0.16.0`;
 - GitHub Actions проверяет PHP 7.4 и 8.3 при каждом push и pull request;
 - тег вида `v0.16.0` запускает проверку и создаёт устанавливаемый ZIP как артефакт Actions.
