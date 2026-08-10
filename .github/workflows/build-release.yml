@@ -1,0 +1,31 @@
+name: Build release ZIP
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+      - name: Check PHP files
+        run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+      - name: Build WordPress ZIP
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          ./scripts/build-release.ps1 -Version $version -OutputDirectory ./dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: horse-club-os-${{ github.ref_name }}
+          path: dist/*.zip
+          if-no-files-found: error
