@@ -53,6 +53,16 @@ final class HCOS_Attendance {
 
 		$decision = self::get_decision( $post_id );
 		if ( 'none' === $decision ) {
+			$net_charge = self::get_booking_net_charge( $post_id, $membership_id );
+			if ( $net_charge > 0 ) {
+				$operation_id = self::create_operation( $post_id, $membership_id, 'refund', 'Автоматический возврат после сброса результата посещения.' );
+				if ( $operation_id ) {
+					update_field( 'field_hcos_booking_membership_refund_operation', $operation_id, $post_id );
+					self::set_result( $post_id, 'Результат занятия сброшен: возвращено 1 занятие на абонемент.' );
+				}
+				return;
+			}
+
 			self::set_result( $post_id, 'Ожидается итог занятия: операция не создана.' );
 			return;
 		}
