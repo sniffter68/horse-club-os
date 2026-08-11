@@ -23,6 +23,7 @@ final class HCOS_Plugin {
 		HCOS_Post_Types::init();
 		HCOS_ACF::init();
 		HCOS_Admin::init();
+		HCOS_Dashboard::init();
 		HCOS_Lesson_Validation::init();
 		HCOS_Calendar::init();
 		HCOS_Memberships::init();
