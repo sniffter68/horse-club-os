@@ -102,18 +102,31 @@ final class HCOS_Payments {
 		if ( $membership_id ) {
 			$payer_id = absint( get_post_meta( $membership_id, 'membership_payer', true ) );
 			if ( ! $payer_id ) {
-				$payer_id = absint( get_post_meta( $membership_id, 'membership_client', true ) );
+				$client_id = absint( get_post_meta( $membership_id, 'membership_client', true ) );
+				$payer_id  = self::resolve_client_payer( $client_id );
 			}
 		} elseif ( $booking_id ) {
 			$payer_id = absint( get_post_meta( $booking_id, 'booking_payer', true ) );
 			if ( ! $payer_id ) {
-				$payer_id = absint( get_post_meta( $booking_id, 'booking_rider', true ) );
+				$rider_id = absint( get_post_meta( $booking_id, 'booking_rider', true ) );
+				$payer_id = self::resolve_client_payer( $rider_id );
 			}
 		}
 
 		if ( $payer_id ) {
 			update_field( 'field_hcos_payment_payer', $payer_id, $payment_id );
 		}
+	}
+
+	private static function resolve_client_payer( $client_id ) {
+		$client_id = absint( $client_id );
+		if ( ! $client_id ) {
+			return 0;
+		}
+
+		$payer_id = absint( get_post_meta( $client_id, 'client_payer', true ) );
+
+		return $payer_id ?: $client_id;
 	}
 
 	private static function update_payment_title( $payment_id ) {
