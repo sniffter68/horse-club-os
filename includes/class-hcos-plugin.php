@@ -33,6 +33,7 @@ final class HCOS_Plugin {
 		HCOS_Memberships::init();
 		HCOS_Memberships_Screen::init();
 		HCOS_Bookings::init();
+		HCOS_Bookings_Screen::init();
 		HCOS_Pricing_Plans::init();
 		HCOS_Payments::init();
 		HCOS_Payments_Screen::init();

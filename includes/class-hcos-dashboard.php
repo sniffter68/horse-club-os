@@ -48,6 +48,7 @@ final class HCOS_Dashboard {
 		$links = array(
 			array( 'dashboard', 'Главная', admin_url( 'admin.php?page=hcos-dashboard' ) ),
 			array( 'calendar', 'Расписание', admin_url( 'edit.php?post_type=lessons&page=hcos-calendar' ) ),
+			array( 'bookings', 'Записи', admin_url( 'edit.php?post_type=lessons&page=hcos-bookings' ) ),
 			array( 'clients', 'Клиенты', admin_url( 'edit.php?post_type=clients&page=hcos-clients' ) ),
 			array( 'memberships', 'Абонементы', admin_url( 'edit.php?post_type=memberships&page=hcos-memberships' ) ),
 			array( 'payments', 'Платежи', admin_url( 'edit.php?post_type=payments&page=hcos-payments' ) ),
