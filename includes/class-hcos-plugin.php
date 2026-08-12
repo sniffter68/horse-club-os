@@ -28,6 +28,7 @@ final class HCOS_Plugin {
 		HCOS_Lesson_Validation::init();
 		HCOS_Calendar::init();
 		HCOS_Memberships::init();
+		HCOS_Memberships_Screen::init();
 		HCOS_Bookings::init();
 		HCOS_Pricing_Plans::init();
 		HCOS_Payments::init();
