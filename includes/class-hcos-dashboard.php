@@ -53,7 +53,7 @@ final class HCOS_Dashboard {
 			array( 'payments', 'Платежи', admin_url( 'edit.php?post_type=payments&page=hcos-payments' ) ),
 			array( 'horses', 'Лошади', admin_url( 'edit.php?post_type=horses&page=hcos-horses' ) ),
 			array( 'trainers', 'Тренеры', admin_url( 'edit.php?post_type=trainers&page=hcos-trainers' ) ),
-			array( 'services', 'Услуги', admin_url( 'edit.php?post_type=services' ) ),
+			array( 'services', 'Услуги', admin_url( 'edit.php?post_type=services&page=hcos-services' ) ),
 		);
 		?>
 		<aside class="hcos-sidebar">

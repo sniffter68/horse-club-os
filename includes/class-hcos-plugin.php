@@ -27,6 +27,7 @@ final class HCOS_Plugin {
 		HCOS_Clients_Screen::init();
 		HCOS_Horses_Screen::init();
 		HCOS_Trainers_Screen::init();
+		HCOS_Services_Screen::init();
 		HCOS_Lesson_Validation::init();
 		HCOS_Calendar::init();
 		HCOS_Memberships::init();

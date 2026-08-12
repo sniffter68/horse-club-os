@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Horse Club OS
  * Description: Базовая система управления клиентами, лошадьми, тренерами, услугами и занятиями конного клуба.
- * Version: 0.23.0
+ * Version: 0.24.0
  * Author: Horse Club OS
  * Text Domain: horse-club-os
  * Requires at least: 6.2
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HCOS_VERSION', '0.23.0' );
+define( 'HCOS_VERSION', '0.24.0' );
 define( 'HCOS_PLUGIN_FILE', __FILE__ );
 define( 'HCOS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -24,6 +24,7 @@ require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-dashboard.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-clients-screen.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-horses-screen.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-trainers-screen.php';
+require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-services-screen.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-lesson-validation.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-calendar.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-memberships.php';
