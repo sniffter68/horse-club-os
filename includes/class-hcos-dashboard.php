@@ -51,7 +51,7 @@ final class HCOS_Dashboard {
 			array( 'clients', 'Клиенты', admin_url( 'edit.php?post_type=clients&page=hcos-clients' ) ),
 			array( 'memberships', 'Абонементы', admin_url( 'edit.php?post_type=memberships&page=hcos-memberships' ) ),
 			array( 'payments', 'Платежи', admin_url( 'edit.php?post_type=payments&page=hcos-payments' ) ),
-			array( 'horses', 'Лошади', admin_url( 'edit.php?post_type=horses' ) ),
+			array( 'horses', 'Лошади', admin_url( 'edit.php?post_type=horses&page=hcos-horses' ) ),
 			array( 'trainers', 'Тренеры', admin_url( 'edit.php?post_type=trainers' ) ),
 			array( 'services', 'Услуги', admin_url( 'edit.php?post_type=services' ) ),
 		);
