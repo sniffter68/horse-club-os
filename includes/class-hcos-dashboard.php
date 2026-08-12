@@ -50,7 +50,7 @@ final class HCOS_Dashboard {
 			array( 'calendar', 'Расписание', admin_url( 'edit.php?post_type=lessons&page=hcos-calendar' ) ),
 			array( 'clients', 'Клиенты', admin_url( 'edit.php?post_type=clients&page=hcos-clients' ) ),
 			array( 'memberships', 'Абонементы', admin_url( 'edit.php?post_type=memberships&page=hcos-memberships' ) ),
-			array( 'payments', 'Платежи', admin_url( 'edit.php?post_type=payments' ) ),
+			array( 'payments', 'Платежи', admin_url( 'edit.php?post_type=payments&page=hcos-payments' ) ),
 			array( 'horses', 'Лошади', admin_url( 'edit.php?post_type=horses' ) ),
 			array( 'trainers', 'Тренеры', admin_url( 'edit.php?post_type=trainers' ) ),
 			array( 'services', 'Услуги', admin_url( 'edit.php?post_type=services' ) ),
@@ -59,7 +59,7 @@ final class HCOS_Dashboard {
 		<aside class="hcos-sidebar">
 			<div class="hcos-brand"><span class="hcos-brand-mark">H</span><span><strong>Horse Club</strong><small>OS</small></span></div>
 			<nav class="hcos-nav" aria-label="Разделы CRM">
-				<?php foreach ( $links as $link ) : ?><a class="<?php echo $active === $link[0] ? 'is-active' : ''; ?>" href="<?php echo esc_url( $link[2] ); ?>"><i></i><?php echo esc_html( $link[1] ); ?></a><?php endforeach; ?>
+				<?php foreach ( $links as $link ) : ?><?php if ( in_array( $link[0], array( 'memberships', 'payments' ), true ) && ! current_user_can( 'hcos_view_finances' ) ) { continue; } ?><a class="<?php echo $active === $link[0] ? 'is-active' : ''; ?>" href="<?php echo esc_url( $link[2] ); ?>"><i></i><?php echo esc_html( $link[1] ); ?></a><?php endforeach; ?>
 				<span class="hcos-nav-divider"></span><a href="<?php echo esc_url( current_user_can( 'manage_options' ) ? admin_url( 'options-general.php' ) : admin_url( 'profile.php' ) ); ?>"><i></i>Настройки</a>
 			</nav>
 			<a class="hcos-user" href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>"><span class="hcos-avatar"><?php echo esc_html( self::initials( $name ) ); ?></span><span><strong><?php echo esc_html( $name ); ?></strong><small><?php echo in_array( HCOS_Security::TRAINER_ROLE, (array) $user->roles, true ) ? 'Тренер' : 'Администратор'; ?></small></span></a>
