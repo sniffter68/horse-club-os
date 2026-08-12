@@ -16,6 +16,15 @@ final class HCOS_Clients_Screen {
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		add_filter( 'acf/load_value/name=booking_rider', array( __CLASS__, 'prefill_booking_rider' ), 10, 3 );
+	}
+
+	public static function prefill_booking_rider( $value, $post_id, $field ) {
+		if ( $value || 'new_post' !== $post_id || ! isset( $_GET['hcos_client'] ) ) {
+			return $value;
+		}
+		$client_id = absint( $_GET['hcos_client'] );
+		return $client_id && 'clients' === get_post_type( $client_id ) ? $client_id : $value;
 	}
 
 	public static function register_page() {
@@ -40,6 +49,12 @@ final class HCOS_Clients_Screen {
 	public static function render_page() {
 		if ( ! current_user_can( 'edit_hcos_clients' ) ) {
 			wp_die( esc_html__( 'Недостаточно прав для просмотра клиентов.', 'horse-club-os' ) );
+		}
+
+		$client_id = isset( $_GET['hcos_client_id'] ) ? absint( $_GET['hcos_client_id'] ) : 0;
+		if ( $client_id ) {
+			self::render_detail_page( $client_id );
+			return;
 		}
 
 		$search = isset( $_GET['hcos_search'] ) ? sanitize_text_field( wp_unslash( $_GET['hcos_search'] ) ) : '';
@@ -123,15 +138,15 @@ final class HCOS_Clients_Screen {
 		$roles       = self::roles( $client->ID );
 		$payer_id    = absint( get_post_meta( $client->ID, 'client_payer', true ) );
 		$status_text = array( 'active' => 'Активен', 'inactive' => 'Неактивен', 'archived' => 'Архив' );
-		$edit_url    = get_edit_post_link( $client->ID );
+		$open_url    = self::client_url( $client->ID );
 		?>
 		<tr>
-			<td><div class="hcos-client-person"><span class="hcos-client-avatar"><?php echo esc_html( self::initials( $client->post_title ) ); ?></span><span><a href="<?php echo esc_url( $edit_url ); ?>"><?php echo esc_html( $client->post_title ); ?></a><small><?php echo esc_html( implode( ' · ', $roles ) ); ?></small><?php if ( $payer_id && $payer_id !== $client->ID ) : ?><em>Плательщик: <?php echo esc_html( get_the_title( $payer_id ) ); ?></em><?php endif; ?></span></div></td>
+			<td><div class="hcos-client-person"><span class="hcos-client-avatar"><?php echo esc_html( self::initials( $client->post_title ) ); ?></span><span><a href="<?php echo esc_url( $open_url ); ?>"><?php echo esc_html( $client->post_title ); ?></a><small><?php echo esc_html( implode( ' · ', $roles ) ); ?></small><?php if ( $payer_id && $payer_id !== $client->ID ) : ?><em>Плательщик: <?php echo esc_html( get_the_title( $payer_id ) ); ?></em><?php endif; ?></span></div></td>
 			<td><div class="hcos-client-contacts"><?php if ( $phone ) : ?><a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ); ?>"><?php echo esc_html( $phone ); ?></a><?php endif; ?><?php if ( $email ) : ?><a href="mailto:<?php echo esc_attr( $email ); ?>"><?php echo esc_html( $email ); ?></a><?php endif; ?><?php if ( ! $phone && ! $email ) : ?><span>Не указаны</span><?php endif; ?></div></td>
 			<td><span class="hcos-client-status is-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( isset( $status_text[ $status ] ) ? $status_text[ $status ] : $status ); ?></span></td>
 			<td><?php self::render_membership( $membership, $finance ); ?></td>
 			<?php if ( $finance ) : ?><td><span class="hcos-client-debt <?php echo $debt > 0 ? 'has-debt' : ''; ?>"><?php echo esc_html( self::money( $debt ) ); ?></span></td><?php endif; ?>
-			<td><a class="hcos-client-open" href="<?php echo esc_url( $edit_url ); ?>">Открыть →</a></td>
+			<td><a class="hcos-client-open" href="<?php echo esc_url( $open_url ); ?>">Открыть →</a></td>
 		</tr>
 		<?php
 	}
@@ -222,6 +237,80 @@ final class HCOS_Clients_Screen {
 		foreach ( $value as $role ) { $roles[] = isset( self::$role_labels[ $role ] ) ? self::$role_labels[ $role ] : $role; }
 		return $roles ?: array( 'Роль не указана' );
 	}
+
+	private static function render_detail_page( $client_id ) {
+		$client = get_post( $client_id );
+		if ( ! $client || 'clients' !== $client->post_type || 'publish' !== $client->post_status || ! current_user_can( 'read_hcos_client', $client_id ) ) {
+			wp_die( esc_html__( 'Карточка клиента не найдена или недоступна.', 'horse-club-os' ) );
+		}
+
+		$finance      = current_user_can( 'hcos_view_finances' );
+		$sensitive    = current_user_can( 'hcos_view_sensitive_notes' );
+		$memberships  = self::memberships_by_client( $finance );
+		$debts        = self::debts_by_payer( $finance );
+		$membership   = isset( $memberships[ $client_id ] ) ? $memberships[ $client_id ] : null;
+		$debt         = isset( $debts[ $client_id ] ) ? $debts[ $client_id ] : 0;
+		$status       = (string) get_post_meta( $client_id, 'client_status', true ) ?: 'active';
+		$status_text  = array( 'active' => 'Активен', 'inactive' => 'Неактивен', 'archived' => 'Архив' );
+		$payer_id     = absint( get_post_meta( $client_id, 'client_payer', true ) );
+		$guardian_ids = get_post_meta( $client_id, 'client_guardians', true );
+		$guardian_ids = is_array( $guardian_ids ) ? array_map( 'absint', $guardian_ids ) : array_filter( array( absint( $guardian_ids ) ) );
+		?>
+		<div class="hcos-app hcos-clients-app hcos-client-detail-app">
+			<?php HCOS_Dashboard::sidebar( 'clients' ); ?>
+			<main class="hcos-main hcos-clients-main">
+				<header class="hcos-header hcos-client-detail-header"><div><a class="hcos-back-link" href="<?php echo esc_url( self::list_url() ); ?>">← Все клиенты</a><h1><?php echo esc_html( $client->post_title ); ?></h1><p><?php echo esc_html( implode( ' · ', self::roles( $client_id ) ) ); ?></p></div><div class="hcos-header-actions"><a class="hcos-secondary-button" href="<?php echo esc_url( get_edit_post_link( $client_id ) ); ?>">Редактировать данные</a><a class="hcos-primary-button" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=bookings&hcos_client=' . $client_id ) ); ?>">＋ Записать на занятие</a></div></header>
+
+				<section class="hcos-client-hero"><span class="hcos-client-hero-avatar"><?php echo esc_html( self::initials( $client->post_title ) ); ?></span><div><h2><?php echo esc_html( $client->post_title ); ?></h2><p><?php echo esc_html( self::meta( $client_id, 'client_phone', 'Телефон не указан' ) ); ?><?php $email = self::meta( $client_id, 'client_email' ); if ( $email ) : ?> · <?php echo esc_html( $email ); ?><?php endif; ?></p></div><span class="hcos-client-status is-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( isset( $status_text[ $status ] ) ? $status_text[ $status ] : $status ); ?></span></section>
+
+				<div class="hcos-client-detail-grid">
+					<?php self::detail_section( 'Контакты и данные', array(
+						array( 'Телефон', self::meta( $client_id, 'client_phone' ) ),
+						array( 'Email', self::meta( $client_id, 'client_email' ) ),
+						array( 'Telegram', self::meta( $client_id, 'client_telegram' ) ),
+						array( 'VK ID', self::meta( $client_id, 'client_vk_id' ) ),
+						array( 'Дата рождения', self::date( self::meta( $client_id, 'client_birth_date' ) ) ),
+						array( 'Дата регистрации', self::date( self::meta( $client_id, 'client_registration_date' ) ) ),
+					) ); ?>
+
+					<?php self::detail_section( 'Связи', array(
+						array( 'Основной плательщик', $payer_id ? get_the_title( $payer_id ) : 'Платит за себя' ),
+						array( 'Родители / представители', self::post_titles( $guardian_ids ) ),
+						array( 'Экстренный контакт', self::meta( $client_id, 'client_emergency_contact' ) ),
+					) ); ?>
+
+					<?php self::detail_section( 'Занятия и предпочтения', array(
+						array( 'Уровень', self::label( self::meta( $client_id, 'client_level' ), array( 'beginner' => 'Начинающий', 'intermediate' => 'Средний', 'advanced' => 'Продвинутый' ) ) ),
+						array( 'Предпочитаемый тренер', self::post_title( self::meta( $client_id, 'client_preferred_trainer' ) ) ),
+						array( 'Формат занятий', self::label( self::meta( $client_id, 'client_preferred_format' ), array( 'individual' => 'Индивидуальный', 'group' => 'Групповой', 'any' => 'Любой' ) ) ),
+						array( 'Опыт', self::meta( $client_id, 'client_experience' ) ),
+						array( 'Цели', self::meta( $client_id, 'client_goals' ) ),
+					) ); ?>
+
+					<?php if ( $finance ) : ?><section class="hcos-client-detail-card hcos-client-finance-card"><h2>Абонемент и оплата</h2><?php if ( $membership ) : ?><div class="hcos-client-balance"><strong><?php echo esc_html( self::number( $membership['balance'] ) ); ?></strong><span>занятий осталось</span></div><dl><div><dt>Действует до</dt><dd><?php echo esc_html( $membership['end'] ?: 'Дата не указана' ); ?></dd></div><div><dt>Задолженность плательщика</dt><dd class="<?php echo $debt > 0 ? 'has-debt' : ''; ?>"><?php echo esc_html( self::money( $debt ) ); ?></dd></div></dl><a href="<?php echo esc_url( get_edit_post_link( $membership['id'] ) ); ?>">Редактировать абонемент →</a><?php else : ?><div class="hcos-client-card-empty">Активного абонемента нет</div><a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=memberships' ) ); ?>">Создать абонемент →</a><?php endif; ?></section><?php endif; ?>
+
+					<?php if ( $sensitive ) : ?><?php self::detail_section( 'Внутренние заметки', array(
+						array( 'Медицинские примечания', self::meta( $client_id, 'client_medical_notes' ) ),
+						array( 'Заметки администратора', self::meta( $client_id, 'client_admin_notes' ) ),
+					), 'hcos-client-notes-card' ); ?><?php endif; ?>
+				</div>
+			</main>
+		</div>
+		<?php
+	}
+
+	private static function detail_section( $title, $rows, $class = '' ) {
+		echo '<section class="hcos-client-detail-card ' . esc_attr( $class ) . '"><h2>' . esc_html( $title ) . '</h2><dl>';
+		foreach ( $rows as $row ) { echo '<div><dt>' . esc_html( $row[0] ) . '</dt><dd>' . ( '' !== trim( (string) $row[1] ) ? nl2br( esc_html( $row[1] ) ) : '<span>Не указано</span>' ) . '</dd></div>'; }
+		echo '</dl></section>';
+	}
+
+	private static function client_url( $client_id ) { return add_query_arg( array( 'post_type' => 'clients', 'page' => 'hcos-clients', 'hcos_client_id' => absint( $client_id ) ), admin_url( 'edit.php' ) ); }
+	private static function list_url() { return add_query_arg( array( 'post_type' => 'clients', 'page' => 'hcos-clients' ), admin_url( 'edit.php' ) ); }
+	private static function meta( $post_id, $key, $fallback = '' ) { $value = get_post_meta( $post_id, $key, true ); return is_scalar( $value ) && '' !== trim( (string) $value ) ? trim( (string) $value ) : $fallback; }
+	private static function post_title( $post_id ) { $post_id = absint( $post_id ); return $post_id ? get_the_title( $post_id ) : ''; }
+	private static function post_titles( $post_ids ) { $titles = array(); foreach ( $post_ids as $post_id ) { $title = self::post_title( $post_id ); if ( $title ) { $titles[] = $title; } } return implode( ', ', $titles ); }
+	private static function label( $value, $labels ) { return isset( $labels[ $value ] ) ? $labels[ $value ] : $value; }
 
 	private static function option( $value, $label, $selected ) { echo '<option value="' . esc_attr( $value ) . '" ' . selected( $selected, $value, false ) . '>' . esc_html( $label ) . '</option>'; }
 	private static function lower( $value ) { return function_exists( 'mb_strtolower' ) ? mb_strtolower( $value ) : strtolower( $value ); }
