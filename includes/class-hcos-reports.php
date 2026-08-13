@@ -3,12 +3,15 @@
 defined( 'ABSPATH' ) || exit;
 
 final class HCOS_Reports {
+	private static $hook = '';
+
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 	}
 
 	public static function register_page() {
-		add_menu_page(
+		self::$hook = add_menu_page(
 			'Отчёты Horse Club OS',
 			'Отчёты',
 			'hcos_view_finances',
@@ -19,6 +22,14 @@ final class HCOS_Reports {
 		);
 	}
 
+	public static function enqueue_assets( $hook ) {
+		if ( self::$hook !== $hook ) {
+			return;
+		}
+		wp_enqueue_style( 'hcos-dashboard', plugins_url( 'assets/css/admin-dashboard.css', HCOS_PLUGIN_FILE ), array(), HCOS_VERSION );
+		wp_enqueue_style( 'hcos-reports', plugins_url( 'assets/css/admin-reports.css', HCOS_PLUGIN_FILE ), array( 'hcos-dashboard' ), HCOS_VERSION );
+	}
+
 	public static function render_page() {
 		if ( ! current_user_can( 'hcos_view_finances' ) ) {
 			wp_die( esc_html__( 'Недостаточно прав.', 'horse-club-os' ) );
@@ -27,7 +38,11 @@ final class HCOS_Reports {
 		$period = self::get_period();
 		$data   = self::collect( $period['start'], $period['end'] );
 		?>
-		<div class="wrap hcos-reports">
+		<div class="hcos-app hcos-reports-app">
+			<?php HCOS_Dashboard::sidebar( 'reports' ); ?>
+			<main class="hcos-main hcos-reports-main">
+			<header class="hcos-header hcos-reports-header"><div><h1>Отчёты</h1><p><?php echo esc_html( wp_date( 'j F', $period['start']->getTimestamp(), wp_timezone() ) . ' — ' . wp_date( 'j F Y', $period['end']->getTimestamp(), wp_timezone() ) ); ?> · показатели клуба</p></div><div class="hcos-header-actions"><a class="hcos-reports-secondary" href="<?php echo esc_url( admin_url( 'edit.php?post_type=payments&page=hcos-payments' ) ); ?>">Платежи</a><a class="hcos-primary-button" href="<?php echo esc_url( admin_url( 'edit.php?post_type=lessons&page=hcos-calendar' ) ); ?>">Расписание</a></div></header>
+			<div class="hcos-reports-content">
 			<h1>Отчёты Horse Club OS</h1>
 			<p class="description">Оперативные показатели клуба по данным CRM. Выручка показана за выбранный период, а долги и остатки — на текущий момент.</p>
 
@@ -60,6 +75,8 @@ final class HCOS_Reports {
 				<?php self::resource_table( 'Загрузка тренеров', 'Тренер', $data['trainers'] ); ?>
 				<?php self::resource_table( 'Загрузка лошадей', 'Лошадь', $data['horses'] ); ?>
 			</div>
+			</div>
+			</main>
 		</div>
 		<style>
 			.hcos-report-filter{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:20px 0;padding:16px;background:#fff;border:1px solid #dcdcde}.hcos-report-filter label{display:flex;flex-direction:column;gap:5px;font-weight:600}.hcos-report-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:18px 0}.hcos-report-card,.hcos-report-panel{background:#fff;border:1px solid #dcdcde;border-radius:4px;padding:18px}.hcos-report-card h2{font-size:13px;margin:0 0 10px;color:#50575e;text-transform:uppercase}.hcos-report-value{font-size:28px;font-weight:600;line-height:1.15}.hcos-report-note{color:#646970;margin-top:7px}.hcos-report-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}.hcos-report-panel h2{margin-top:0}.hcos-report-panel table{width:100%;border-collapse:collapse}.hcos-report-panel th,.hcos-report-panel td{text-align:left;padding:9px 7px;border-bottom:1px solid #f0f0f1}.hcos-report-panel th:last-child,.hcos-report-panel td:last-child{text-align:right}.hcos-report-empty{color:#646970}@media(max-width:782px){.hcos-report-columns{grid-template-columns:1fr}}
