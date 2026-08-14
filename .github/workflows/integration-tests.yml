@@ -9,10 +9,10 @@ permissions:
   contents: read
 
 jobs:
-  pilot-smoke-tests:
-    name: Pilot smoke tests
+  pilot-regression:
+    name: Full pilot regression suite
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -26,11 +26,8 @@ jobs:
       - name: Verify active plugins
         run: npx --yes @wordpress/env@latest run cli wp plugin list --status=active
 
-      - name: Run adult cash payment scenario
-        run: npx --yes @wordpress/env@latest run cli wp eval-file wp-content/plugins/horse-club-os/tests/integration/adult-cash-payment.php
-
-      - name: Run child separate payer scenario
-        run: npx --yes @wordpress/env@latest run cli wp eval-file wp-content/plugins/horse-club-os/tests/integration/child-separate-payer.php
+      - name: Run full Horse Club OS pilot regression suite
+        run: npx --yes @wordpress/env@latest run cli wp eval-file wp-content/plugins/horse-club-os/tests/integration/pilot-regression.php
 
       - name: Print WordPress debug log on failure
         if: failure()
