@@ -1,0 +1,38 @@
+name: Integration tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pilot-regression:
+    name: Full pilot regression suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Start isolated WordPress + ACF
+        run: npx --yes @wordpress/env@latest start
+
+      - name: Verify active plugins
+        run: npx --yes @wordpress/env@latest run cli wp plugin list --status=active
+
+      - name: Run full Horse Club OS pilot regression suite
+        run: npx --yes @wordpress/env@latest run cli wp eval-file wp-content/plugins/horse-club-os/tests/integration/pilot-regression.php
+
+      - name: Print WordPress debug log on failure
+        if: failure()
+        run: npx --yes @wordpress/env@latest run cli sh -lc 'test -f wp-content/debug.log && cat wp-content/debug.log || true'
+
+      - name: Stop test environment
+        if: always()
+        run: npx --yes @wordpress/env@latest stop
