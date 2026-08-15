@@ -15,6 +15,11 @@ define( 'HCOS_VERSION', '0.26.0' );
 define( 'HCOS_PLUGIN_FILE', __FILE__ );
 define( 'HCOS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
+$hcos_composer_autoload = HCOS_PLUGIN_DIR . 'vendor/autoload.php';
+if ( file_exists( $hcos_composer_autoload ) ) {
+	require_once $hcos_composer_autoload;
+}
+
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-security.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-audit.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-post-types.php';
@@ -36,6 +41,7 @@ require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-payments.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-payments-screen.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-attendance.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-reports.php';
+require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-mcp.php';
 require_once HCOS_PLUGIN_DIR . 'includes/class-hcos-plugin.php';
 
 register_activation_hook( __FILE__, array( 'HCOS_Plugin', 'activate' ) );
