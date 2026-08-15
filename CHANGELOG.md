@@ -2,6 +2,19 @@
 
 Формат основан на Keep a Changelog. Нумерация версий следует Semantic Versioning.
 
+## [0.27.0] — 2026-08-16
+
+- Добавлена интеграция с официальным WordPress MCP Adapter через Composer.
+- Добавлен слой `HCOS_MCP` поверх WordPress Abilities API.
+- Добавлены read-only abilities `hcos/health-check`, `hcos/inspect-booking`, `hcos/inspect-client-relations` и `hcos/inspect-membership`.
+- MCP abilities используют существующие права Horse Club OS; финансовые данные доступны только пользователям с `hcos_view_finances`.
+- Добавлена безопасная загрузка Composer autoload и включение MCP только при наличии WordPress Abilities API.
+- Добавлена поддержка стандартного HTTP MCP endpoint и удалённой аутентификации через WordPress Application Passwords.
+- Исправлено чтение представителей клиента через фактическое поле `client_guardians`.
+- Release ZIP теперь включает production Composer dependencies.
+- Добавлены CI-проверки Composer на PHP 7.4/8.3 и runtime smoke-test MCP на WordPress 7.0.
+- Добавлена документация по безопасному удалённому MCP-подключению.
+
 ## [0.26.0] — 2026-08-13
 
 - Экран отчётов перенесён в единый интерфейс Horse Club OS.
