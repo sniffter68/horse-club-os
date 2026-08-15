@@ -1,0 +1,53 @@
+name: Build installable plugin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'horse-club-os.php'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'scripts/build-release.ps1'
+      - '.github/workflows/build-installable.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build WordPress installable ZIP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Install production Composer dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      - name: Read plugin version
+        id: version
+        shell: pwsh
+        run: |
+          $text = Get-Content -Raw -Encoding UTF8 horse-club-os.php
+          if ($text -notmatch "define\(\s*'HCOS_VERSION',\s*'([^']+)'\s*\)") {
+            throw 'HCOS_VERSION not found.'
+          }
+          "version=$($Matches[1])" >> $env:GITHUB_OUTPUT
+
+      - name: Build WordPress ZIP
+        shell: pwsh
+        run: ./scripts/build-release.ps1 -Version '${{ steps.version.outputs.version }}' -OutputDirectory ./dist
+
+      - name: Upload installable ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: horse-club-os-${{ steps.version.outputs.version }}-wordpress
+          path: dist/horse-club-os-${{ steps.version.outputs.version }}-wordpress.zip
+          if-no-files-found: error
+          retention-days: 30
