@@ -2,10 +2,15 @@
 
 defined( 'ABSPATH' ) || exit( 1 );
 
+// Ensure REST routes are registered when this file is executed through WP-CLI.
+do_action( 'rest_api_init' );
+$routes = rest_get_server()->get_routes();
+
 $checks = array(
 	'Abilities API available' => function_exists( 'wp_get_ability' ),
 	'MCP Adapter class loaded' => class_exists( '\\WP\\MCP\\Core\\McpAdapter' ),
 	'HCOS MCP integration loaded' => class_exists( 'HCOS_MCP' ),
+	'Default MCP HTTP route registered' => isset( $routes['/mcp/mcp-adapter-default-server'] ),
 );
 
 foreach ( array( 'health-check', 'inspect-booking', 'inspect-client-relations', 'inspect-membership' ) as $slug ) {
