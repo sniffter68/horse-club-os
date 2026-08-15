@@ -196,7 +196,7 @@ final class HCOS_MCP {
 			$roles = $roles ? array( (string) $roles ) : array();
 		}
 
-		$representatives = get_post_meta( $client_id, 'client_representatives', true );
+		$representatives = get_post_meta( $client_id, 'client_guardians', true );
 		if ( ! is_array( $representatives ) ) {
 			$representatives = $representatives ? array( $representatives ) : array();
 		}
