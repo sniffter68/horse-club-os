@@ -5,6 +5,7 @@
  * Version: 0.27.0
  * Author: Horse Club OS
  * Text Domain: horse-club-os
+ * Update URI: https://github.com/sniffter68/horse-club-os
  * Requires at least: 6.2
  * Requires PHP: 7.4
  */
