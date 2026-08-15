@@ -39,6 +39,7 @@ final class HCOS_Plugin {
 		HCOS_Payments_Screen::init();
 		HCOS_Attendance::init();
 		HCOS_Reports::init();
+		HCOS_MCP::init();
 	}
 
 	public static function activate() {
