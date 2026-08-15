@@ -3,10 +3,13 @@
 defined( 'ABSPATH' ) || exit;
 
 final class HCOS_Payments {
+	const TOTALS_BACKFILL_VERSION = '0.26.1';
+
 	private static $previous_targets = array();
 	private static $deleted_targets  = array();
 
 	public static function init() {
+		add_action( 'admin_init', array( __CLASS__, 'backfill_existing_totals' ), 5 );
 		add_filter( 'acf/validate_value/name=payment_purpose_type', array( __CLASS__, 'validate_purpose' ), 10, 4 );
 		add_filter( 'acf/update_value/name=payment_membership', array( __CLASS__, 'remember_previous_target' ), 10, 4 );
 		add_filter( 'acf/update_value/name=payment_booking', array( __CLASS__, 'remember_previous_target' ), 10, 4 );
@@ -15,6 +18,21 @@ final class HCOS_Payments {
 		add_action( 'transition_post_status', array( __CLASS__, 'payment_status_changed' ), 20, 3 );
 		add_action( 'before_delete_post', array( __CLASS__, 'remember_deleted_payment' ), 10, 2 );
 		add_action( 'deleted_post', array( __CLASS__, 'recalculate_deleted_payment' ), 10, 2 );
+	}
+
+	public static function backfill_existing_totals() {
+		if ( self::TOTALS_BACKFILL_VERSION === get_option( 'hcos_payment_totals_backfill_version' ) || ! function_exists( 'update_field' ) ) {
+			return;
+		}
+
+		foreach ( get_posts( array( 'post_type' => 'memberships', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true ) ) as $membership_id ) {
+			self::recalculate_membership( (int) $membership_id );
+		}
+		foreach ( get_posts( array( 'post_type' => 'bookings', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true ) ) as $booking_id ) {
+			self::recalculate_booking( (int) $booking_id );
+		}
+
+		update_option( 'hcos_payment_totals_backfill_version', self::TOTALS_BACKFILL_VERSION, false );
 	}
 
 	public static function validate_purpose( $valid, $value, $field, $input ) {
@@ -254,7 +272,7 @@ final class HCOS_Payments {
 		update_field( 'field_hcos_booking_payment_status', $status, $booking_id );
 	}
 
-	private static function payment_state( $expected, $net, $refund ) {
+	public static function payment_state( $expected, $net, $refund ) {
 		if ( $refund > 0 ) {
 			return 'refund';
 		}

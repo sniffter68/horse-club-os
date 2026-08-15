@@ -4,8 +4,37 @@ defined( 'ABSPATH' ) || exit;
 
 final class HCOS_Attendance {
 	public static function init() {
+		add_filter( 'acf/validate_value/name=booking_attendance', array( __CLASS__, 'validate_attendance_time' ), 10, 4 );
+		add_filter( 'acf/update_value/name=booking_attendance', array( __CLASS__, 'enforce_attendance_time' ), 10, 4 );
 		add_action( 'acf/save_post', array( __CLASS__, 'snapshot_booking_rules' ), 45 );
 		add_action( 'acf/save_post', array( __CLASS__, 'process_booking' ), 50 );
+	}
+
+	public static function validate_attendance_time( $valid, $value, $field, $input ) {
+		if ( true !== $valid || ! in_array( $value, array( 'present', 'no_show' ), true ) ) {
+			return $valid;
+		}
+
+		$lesson_id = self::posted_lesson_id();
+		if ( ! $lesson_id || ! self::is_lesson_started( $lesson_id ) ) {
+			return 'Посещение или неявку можно отметить только после начала занятия.';
+		}
+
+		return $valid;
+	}
+
+	public static function enforce_attendance_time( $value, $post_id, $field, $original ) {
+		if ( ! in_array( $value, array( 'present', 'no_show' ), true ) ) {
+			return $value;
+		}
+
+		$lesson_id = self::posted_lesson_id( $post_id );
+		if ( $lesson_id && self::is_lesson_started( $lesson_id ) ) {
+			return $value;
+		}
+
+		$previous = is_numeric( $post_id ) ? (string) get_post_meta( (int) $post_id, 'booking_attendance', true ) : '';
+		return in_array( $previous, array( 'expected', 'excused' ), true ) ? $previous : 'expected';
 	}
 
 	public static function snapshot_booking_rules( $post_id ) {
@@ -40,6 +69,12 @@ final class HCOS_Attendance {
 		}
 
 		$post_id       = (int) $post_id;
+		$attendance    = (string) get_post_meta( $post_id, 'booking_attendance', true );
+		if ( in_array( $attendance, array( 'present', 'no_show' ), true ) && ! self::is_booking_finalization_allowed( $post_id ) ) {
+			self::set_result( $post_id, 'Операция не создана: посещение или неявку можно отметить только после начала занятия.' );
+			return;
+		}
+
 		$membership_id = absint( get_post_meta( $post_id, 'booking_membership', true ) );
 		if ( ! $membership_id ) {
 			self::set_result( $post_id, 'Абонемент не выбран: денежная оплата обрабатывается отдельно.' );
@@ -104,6 +139,47 @@ final class HCOS_Attendance {
 			update_field( 'field_hcos_booking_membership_refund_operation', $operation_id, $post_id );
 			self::set_result( $post_id, 'Возвращено 1 занятие на абонемент.' );
 		}
+	}
+
+	public static function is_booking_finalization_allowed( $booking_id, DateTimeImmutable $now = null ) {
+		$lesson_id = absint( get_post_meta( $booking_id, 'booking_lesson', true ) );
+		return $lesson_id && self::is_lesson_started( $lesson_id, $now );
+	}
+
+	public static function is_lesson_started( $lesson_id, DateTimeImmutable $now = null ) {
+		$date = (string) get_post_meta( $lesson_id, 'lesson_date', true );
+		$time = (string) get_post_meta( $lesson_id, 'lesson_time', true );
+		return self::is_datetime_started( $date, $time, $now );
+	}
+
+	public static function is_datetime_started( $date, $time, DateTimeImmutable $now = null ) {
+		$date = preg_replace( '/\D+/', '', (string) $date );
+		$time = preg_replace( '/\D+/', '', (string) $time );
+		if ( 8 !== strlen( $date ) || strlen( $time ) < 4 ) {
+			return false;
+		}
+
+		$timezone = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+		$lesson   = DateTimeImmutable::createFromFormat( '!Ymd Hi', $date . ' ' . substr( $time, 0, 4 ), $timezone );
+		$errors   = DateTimeImmutable::getLastErrors();
+		if ( ! $lesson || ( false !== $errors && ( $errors['warning_count'] || $errors['error_count'] ) ) ) {
+			return false;
+		}
+
+		$now = $now ?: new DateTimeImmutable( 'now', $timezone );
+		return $now->getTimestamp() >= $lesson->getTimestamp();
+	}
+
+	private static function posted_lesson_id( $post_id = 0 ) {
+		if ( isset( $_POST['acf']['field_hcos_booking_lesson'] ) ) {
+			return absint( wp_unslash( $_POST['acf']['field_hcos_booking_lesson'] ) );
+		}
+
+		if ( ! $post_id && isset( $_POST['post_ID'] ) ) {
+			$post_id = absint( $_POST['post_ID'] );
+		}
+
+		return $post_id ? absint( get_post_meta( $post_id, 'booking_lesson', true ) ) : 0;
 	}
 
 	private static function get_decision( $booking_id ) {

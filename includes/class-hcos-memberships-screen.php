@@ -104,7 +104,8 @@ final class HCOS_Memberships_Screen {
 				$data['active']++;
 				$data['balance'] += max( 0, (float) get_post_meta( $item->ID, 'membership_balance', true ) );
 			}
-			$data['debt'] += max( 0, (float) get_post_meta( $item->ID, 'membership_debt_amount', true ) );
+			$finance = self::finance( $item->ID );
+			$data['debt'] += $finance['debt'];
 		}
 		return $data;
 	}
@@ -132,15 +133,35 @@ final class HCOS_Memberships_Screen {
 		$status   = (string) get_post_meta( $item->ID, 'membership_status', true ) ?: 'draft';
 		$balance  = (float) get_post_meta( $item->ID, 'membership_balance', true );
 		$limit    = (float) get_post_meta( $item->ID, 'membership_lesson_limit', true );
-		$paid     = (float) get_post_meta( $item->ID, 'membership_paid_amount', true );
-		$price    = (float) get_post_meta( $item->ID, 'membership_price', true );
-		$debt     = max( 0, (float) get_post_meta( $item->ID, 'membership_debt_amount', true ) );
+		$payment  = self::finance( $item->ID );
+		$paid     = $payment['paid'];
+		$price    = $payment['price'];
+		$debt     = $payment['debt'];
 		$start    = self::date( get_post_meta( $item->ID, 'membership_start_date', true ) );
 		$end      = self::date( get_post_meta( $item->ID, 'membership_end_date', true ) );
 		$rider_url = $rider_id ? add_query_arg( array( 'post_type' => 'clients', 'page' => 'hcos-clients', 'hcos_client_id' => $rider_id ), admin_url( 'edit.php' ) ) : '';
 		?>
-		<tr><td><div class="hcos-memberships-name"><a href="<?php echo esc_url( get_edit_post_link( $item->ID ) ); ?>"><?php echo esc_html( $plan ?: 'Абонемент' ); ?></a><small><?php echo esc_html( $item->post_title ); ?></small></div></td><td><div class="hcos-memberships-people"><?php if ( $rider_url ) : ?><a href="<?php echo esc_url( $rider_url ); ?>"><?php echo esc_html( get_the_title( $rider_id ) ); ?></a><?php else : ?><span>Всадник не указан</span><?php endif; ?><small><?php echo esc_html( 'Плательщик: ' . ( $payer_id ? get_the_title( $payer_id ) : 'не указан' ) ); ?></small></div></td><td><div class="hcos-memberships-period"><strong><?php echo esc_html( $start ?: 'Без даты' ); ?></strong><small><?php echo esc_html( $end ? 'до ' . $end : 'без окончания' ); ?></small></div></td><td><div class="hcos-memberships-balance"><strong><?php echo esc_html( self::number( $balance ) ); ?></strong><small><?php echo esc_html( $limit ? 'из ' . self::number( $limit ) : 'занятий' ); ?></small></div></td><?php if ( $finance ) : ?><td><div class="hcos-memberships-payment"><strong><?php echo esc_html( self::money( $paid ) . ' / ' . self::money( $price ) ); ?></strong><small class="<?php echo $debt > 0 ? 'has-debt' : ''; ?>"><?php echo esc_html( $debt > 0 ? 'Долг ' . self::money( $debt ) : 'Оплачено' ); ?></small></div></td><?php endif; ?><td><span class="hcos-memberships-status is-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( isset( self::$status_labels[ $status ] ) ? self::$status_labels[ $status ] : $status ); ?></span></td><td><a class="hcos-memberships-open" href="<?php echo esc_url( get_edit_post_link( $item->ID ) ); ?>">Редактировать →</a></td></tr>
+		<tr><td><div class="hcos-memberships-name"><a href="<?php echo esc_url( get_edit_post_link( $item->ID ) ); ?>"><?php echo esc_html( $plan ?: 'Абонемент' ); ?></a><small><?php echo esc_html( $item->post_title ); ?></small></div></td><td><div class="hcos-memberships-people"><?php if ( $rider_url ) : ?><a href="<?php echo esc_url( $rider_url ); ?>"><?php echo esc_html( get_the_title( $rider_id ) ); ?></a><?php else : ?><span>Всадник не указан</span><?php endif; ?><small><?php echo esc_html( 'Плательщик: ' . ( $payer_id ? get_the_title( $payer_id ) : 'не указан' ) ); ?></small></div></td><td><div class="hcos-memberships-period"><strong><?php echo esc_html( $start ?: 'Без даты' ); ?></strong><small><?php echo esc_html( $end ? 'до ' . $end : 'без окончания' ); ?></small></div></td><td><div class="hcos-memberships-balance"><strong><?php echo esc_html( self::number( $balance ) ); ?></strong><small><?php echo esc_html( $limit ? 'из ' . self::number( $limit ) : 'занятий' ); ?></small></div></td><?php if ( $finance ) : ?><td><div class="hcos-memberships-payment"><strong><?php echo esc_html( self::money( $paid ) . ' / ' . self::money( $price ) ); ?></strong><small class="<?php echo $debt > 0 || ! $payment['calculated'] ? 'has-debt' : ''; ?>"><?php echo esc_html( $payment['label'] ); ?></small></div></td><?php endif; ?><td><span class="hcos-memberships-status is-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( isset( self::$status_labels[ $status ] ) ? self::$status_labels[ $status ] : $status ); ?></span></td><td><a class="hcos-memberships-open" href="<?php echo esc_url( get_edit_post_link( $item->ID ) ); ?>">Редактировать →</a></td></tr>
 		<?php
+	}
+
+	private static function finance( $membership_id ) {
+		$paid_raw = get_post_meta( $membership_id, 'membership_paid_amount', true );
+		$debt_raw = get_post_meta( $membership_id, 'membership_debt_amount', true );
+		$price    = max( 0, (float) get_post_meta( $membership_id, 'membership_price', true ) );
+		$paid     = (float) $paid_raw;
+		$calculated = '' !== (string) $paid_raw && '' !== (string) $debt_raw;
+		$debt       = $calculated ? max( 0, (float) $debt_raw ) : max( 0, $price - $paid );
+
+		if ( ! $calculated ) {
+			$label = 'Требует пересчёта';
+		} elseif ( $debt > 0 ) {
+			$label = 'Долг ' . self::money( $debt );
+		} else {
+			$label = 'Оплачено';
+		}
+
+		return compact( 'paid', 'price', 'debt', 'calculated', 'label' );
 	}
 
 	private static function list_url() { return add_query_arg( array( 'post_type' => 'memberships', 'page' => 'hcos-memberships' ), admin_url( 'edit.php' ) ); }

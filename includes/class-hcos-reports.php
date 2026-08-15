@@ -115,6 +115,9 @@ final class HCOS_Reports {
 		$booking_ids = self::booking_ids_for_lessons( $lesson_ids );
 		foreach ( $booking_ids as $booking_id ) {
 			$attendance = (string) get_post_meta( $booking_id, 'booking_attendance', true );
+			if ( in_array( $attendance, array( 'present', 'no_show' ), true ) && ! HCOS_Attendance::is_booking_finalization_allowed( $booking_id ) ) {
+				$attendance = 'expected';
+			}
 			$key        = 'attendance_' . ( in_array( $attendance, array( 'present', 'no_show', 'excused', 'expected' ), true ) ? $attendance : 'expected' );
 			$data[ $key ]++;
 		}

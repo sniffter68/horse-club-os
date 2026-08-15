@@ -27,7 +27,7 @@ if (Test-Path -LiteralPath $destination) {
 	throw "Release file already exists: $destination"
 }
 
-$excludedDirectories = @('.git', '.github', 'dist', 'docs', 'scripts')
+$excludedDirectories = @('.git', '.github', 'dist', 'docs', 'scripts', 'tests')
 $excludedFiles = @('.gitignore', '.gitattributes', 'CHANGELOG.md', 'SECURITY.md')
 $files = Get-ChildItem -LiteralPath $root -File -Recurse | Where-Object {
 	$relative = $_.FullName.Substring($root.Length + 1)
