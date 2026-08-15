@@ -17,6 +17,9 @@ jobs:
         with:
           php-version: '7.4'
           coverage: none
+          tools: composer:v2
+      - name: Install production dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
       - name: Check PHP files
         run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
       - name: Build WordPress ZIP

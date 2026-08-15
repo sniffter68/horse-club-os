@@ -1,0 +1,17 @@
+{
+  "name": "horse-club-os/horse-club-os",
+  "description": "Horse Club OS WordPress plugin",
+  "type": "wordpress-plugin",
+  "license": "proprietary",
+  "require": {
+    "php": ">=7.4",
+    "wordpress/mcp-adapter": "0.5.0"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true,
+    "allow-plugins": {
+      "composer/installers": true
+    }
+  }
+}

@@ -1,0 +1,44 @@
+name: MCP integration
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  mcp-smoke:
+    name: WordPress 7.0 MCP smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install MCP Adapter dependency
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      - name: Start WordPress 7.0
+        run: npx --yes @wordpress/env@latest start
+
+      - name: Verify MCP runtime
+        run: npx --yes @wordpress/env@latest run cli wp eval-file wp-content/plugins/horse-club-os/tests/mcp-smoke.php
+
+      - name: Print WordPress debug log on failure
+        if: failure()
+        run: npx --yes @wordpress/env@latest run cli sh -lc 'test -f wp-content/debug.log && cat wp-content/debug.log || true'
+
+      - name: Stop test environment
+        if: always()
+        run: npx --yes @wordpress/env@latest stop
