@@ -19,8 +19,16 @@ function admin_url( $path = '' ) {
 	return 'https://crm.example.test/wp-admin/' . ltrim( $path, '/' );
 }
 
+function home_url( $path = '' ) {
+	return 'https://crm.example.test/' . ltrim( $path, '/' );
+}
+
 function network_site_url( $path = '', $scheme = null ) {
 	return 'https://crm.example.test/' . ltrim( $path, '/' );
+}
+
+function wp_parse_url( $url, $component = -1 ) {
+	return parse_url( $url, $component );
 }
 
 function current_user_can( $capability ) {
@@ -128,9 +136,16 @@ $mail_user               = new stdClass();
 $mail_user->display_name = 'Инга Чернышова';
 $reset_message           = HCOS_Mail::filter_password_reset_message( '', 'test-key', 'Inga', $mail_user );
 hcos_assert_same( 'Союз любителей конного спорта', HCOS_Mail::filter_from_name( 'WordPress' ), 'Outgoing mail must use the club sender name.' );
-hcos_assert_same( 'Доступ в Horse Club OS', HCOS_Mail::filter_password_reset_title( '', 'Inga', $mail_user ), 'Password reset email must use the branded subject.' );
+hcos_assert_same( 'Доступ к рабочей системе', HCOS_Mail::filter_password_reset_title( '', 'Inga', $mail_user ), 'Password reset email must use the neutral branded subject.' );
 hcos_assert_same( true, false !== strpos( $reset_message, 'Здравствуйте, Инга Чернышова!' ), 'Password reset email must address the user.' );
-hcos_assert_same( true, false !== strpos( $reset_message, 'action=rp&key=test-key&login=Inga' ), 'Password reset email must contain the WordPress reset URL.' );
+hcos_assert_same( true, false !== strpos( $reset_message, 'https://crm.example.test/?access=' ), 'Password reset email must contain the neutral CRM recovery URL.' );
+hcos_assert_same( false, false !== strpos( $reset_message, 'wp-login.php' ), 'Password reset email must not expose the technical WordPress reset URL.' );
+hcos_assert_same( false, false !== strpos( $reset_message, 'test-key' ), 'Password reset email must not expose the reset key as readable text.' );
+hcos_assert_same( true, HCOS_Mail::is_recovery_path( '/' ), 'CRM root recovery path must be recognized.' );
+hcos_assert_same( false, HCOS_Mail::is_recovery_path( '/wp-login.php' ), 'WordPress login path must not be treated as the CRM recovery path.' );
+hcos_assert_same( array( 'user_login' => 'Inga', 'key' => 'test-key' ), HCOS_Mail::parse_recovery_token( HCOS_Mail::recovery_token( 'test-key', 'Inga' ) ), 'Opaque recovery token must round-trip safely.' );
+hcos_assert_same( false, HCOS_Mail::parse_recovery_token( 'invalid' ), 'Invalid recovery tokens must fail closed.' );
+hcos_assert_same( 'https://crm.example.test/wp-login.php?action=rp&key=test-key&login=Inga', HCOS_Mail::wordpress_reset_url( 'test-key', 'Inga' ), 'CRM recovery route must target the native WordPress reset form.' );
 
 $mail_args = HCOS_Mail::format_password_reset_email(
 	array(
