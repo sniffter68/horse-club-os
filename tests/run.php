@@ -5,6 +5,7 @@ define( 'ABSPATH', __DIR__ . '/' );
 $hcos_test_meta    = array();
 $hcos_test_options = array();
 $hcos_test_updates = array();
+$hcos_test_caps    = array();
 
 function absint( $value ) {
 	return abs( (int) $value );
@@ -16,6 +17,19 @@ function wp_timezone() {
 
 function admin_url( $path = '' ) {
 	return 'https://crm.example.test/wp-admin/' . ltrim( $path, '/' );
+}
+
+function current_user_can( $capability ) {
+	global $hcos_test_caps;
+	return ! empty( $hcos_test_caps[ $capability ] );
+}
+
+function esc_url( $value ) {
+	return (string) $value;
+}
+
+function esc_html( $value ) {
+	return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' );
 }
 
 function untrailingslashit( $value ) {
@@ -76,6 +90,8 @@ function update_option( $key, $value, $autoload = null ) {
 require_once dirname( __DIR__ ) . '/includes/class-hcos-attendance.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-payments.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-login.php';
+require_once dirname( __DIR__ ) . '/includes/class-hcos-security.php';
+require_once dirname( __DIR__ ) . '/includes/class-hcos-dashboard.php';
 
 function hcos_assert_same( $expected, $actual, $message ) {
 	if ( $expected !== $actual ) {
@@ -102,6 +118,26 @@ hcos_assert_same( false, HCOS_Login::is_portal_path( '/wp-json/', '/' ), 'REST p
 hcos_assert_same( true, HCOS_Login::can_use_portal( new HCOS_Test_User( true ) ), 'Horse Club OS staff capability must grant portal access.' );
 hcos_assert_same( false, HCOS_Login::can_use_portal( new HCOS_Test_User( false ) ), 'Unrelated WordPress users must not enter the portal.' );
 hcos_assert_same( 'https://crm.example.test/wp-admin/admin.php?page=hcos-dashboard', HCOS_Login::destination(), 'Successful login must open the Horse Club OS dashboard.' );
+
+$sensitive_fields = new ReflectionProperty( 'HCOS_Security', 'sensitive_fields' );
+$sensitive_fields->setAccessible( true );
+hcos_assert_same( true, in_array( 'lesson_comment', $sensitive_fields->getValue(), true ), 'Trainer must not see the lesson administrator comment.' );
+
+$attention = new ReflectionMethod( 'HCOS_Dashboard', 'attention' );
+$attention->setAccessible( true );
+$hcos_test_caps = array();
+ob_start();
+$attention->invoke( null, array() );
+$trainer_actions = ob_get_clean();
+hcos_assert_same( false, false !== strpos( $trainer_actions, 'Создать абонемент' ), 'Trainer dashboard must not offer membership creation.' );
+hcos_assert_same( false, false !== strpos( $trainer_actions, 'Принять оплату' ), 'Trainer dashboard must not offer payment creation.' );
+
+$hcos_test_caps = array( 'hcos_view_finances' => true, 'edit_hcos_memberships' => true );
+ob_start();
+$attention->invoke( null, array() );
+$manager_actions = ob_get_clean();
+hcos_assert_same( true, false !== strpos( $manager_actions, 'Создать абонемент' ), 'Manager dashboard must retain membership creation.' );
+hcos_assert_same( true, false !== strpos( $manager_actions, 'Принять оплату' ), 'Manager dashboard must retain payment creation.' );
 
 hcos_assert_same( 'unpaid', HCOS_Payments::payment_state( 1000, 0, 0 ), 'Zero payment must remain unpaid.' );
 hcos_assert_same( 'partial', HCOS_Payments::payment_state( 1000, 400, 0 ), 'Partial payment must be marked partial.' );

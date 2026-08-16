@@ -30,6 +30,7 @@ final class HCOS_Security {
 		'trainer_rate',
 		'trainer_admin_notes',
 		'service_admin_notes',
+		'lesson_comment',
 		'booking_admin_notes',
 		'pricing_plan_admin_notes',
 	);
