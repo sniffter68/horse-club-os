@@ -108,6 +108,7 @@ require_once dirname( __DIR__ ) . '/includes/class-hcos-payments.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-login.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-mail.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-security.php';
+require_once dirname( __DIR__ ) . '/includes/class-hcos-admin.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-dashboard.php';
 
 function hcos_assert_same( $expected, $actual, $message ) {
@@ -231,6 +232,18 @@ hcos_assert_same( $manager_financial_field, HCOS_Security::prepare_financial_fie
 hcos_assert_same( 99, HCOS_Security::protect_financial_field_update( 99, 416, $manager_financial_field ), 'Manager admin form must retain financial changes.' );
 $hcos_test_caps = array( 'hcos_view_finances' => true, 'hcos_view_sensitive_notes' => true );
 hcos_assert_same( 'Изменено', HCOS_Security::protect_sensitive_field_update( 'Изменено', 363, array( 'name' => 'client_admin_notes' ) ), 'Manager admin form must retain sensitive note changes.' );
+
+$hcos_test_caps = array();
+$trainer_booking_columns = HCOS_Admin::booking_columns( array( 'cb' => 'Select', 'title' => 'Title', 'date' => 'Date' ) );
+hcos_assert_same( false, isset( $trainer_booking_columns['booking_charge_result'] ), 'Trainer standard booking list must not expose membership processing status.' );
+hcos_assert_same( false, isset( $trainer_booking_columns['booking_payment_status'] ), 'Trainer standard booking list must not expose payment status.' );
+hcos_assert_same( false, isset( $trainer_booking_columns['booking_debt_amount'] ), 'Trainer standard booking list must not expose debt.' );
+
+$hcos_test_caps = array( 'hcos_view_finances' => true );
+$manager_booking_columns = HCOS_Admin::booking_columns( array( 'cb' => 'Select', 'title' => 'Title', 'date' => 'Date' ) );
+hcos_assert_same( true, isset( $manager_booking_columns['booking_charge_result'] ), 'Manager standard booking list must retain membership processing status.' );
+hcos_assert_same( true, isset( $manager_booking_columns['booking_payment_status'] ), 'Manager standard booking list must retain payment status.' );
+hcos_assert_same( true, isset( $manager_booking_columns['booking_debt_amount'] ), 'Manager standard booking list must retain debt.' );
 
 $attention = new ReflectionMethod( 'HCOS_Dashboard', 'attention' );
 $attention->setAccessible( true );

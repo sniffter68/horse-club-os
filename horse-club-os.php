@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Horse Club OS
  * Description: Базовая система управления клиентами, лошадьми, тренерами, услугами и занятиями конного клуба.
- * Version: 0.28.4
+ * Version: 0.28.5
  * Author: Horse Club OS
  * Text Domain: horse-club-os
  * Update URI: https://github.com/sniffter68/horse-club-os
@@ -12,7 +12,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HCOS_VERSION', '0.28.4' );
+define( 'HCOS_VERSION', '0.28.5' );
 define( 'HCOS_PLUGIN_FILE', __FILE__ );
 define( 'HCOS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
