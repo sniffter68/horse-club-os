@@ -40,6 +40,14 @@ final class HCOS_Security {
 		'trainer_rate',
 		'service_price',
 		'lesson_price',
+		'booking_tab_finance',
+		'booking_membership',
+		'booking_membership_operation',
+		'booking_membership_refund_operation',
+		'booking_charge_policy',
+		'booking_charge_result',
+		'booking_cancellation_hours_snapshot',
+		'booking_late_cancel_policy_snapshot',
 		'booking_payment_status',
 		'booking_paid_amount',
 		'booking_debt_amount',
@@ -52,9 +60,11 @@ final class HCOS_Security {
 
 		foreach ( self::$sensitive_fields as $field_name ) {
 			add_filter( 'acf/prepare_field/name=' . $field_name, array( __CLASS__, 'prepare_sensitive_field' ) );
+			add_filter( 'acf/update_value/name=' . $field_name, array( __CLASS__, 'protect_sensitive_field_update' ), 10, 3 );
 		}
 		foreach ( self::$financial_fields as $field_name ) {
 			add_filter( 'acf/prepare_field/name=' . $field_name, array( __CLASS__, 'prepare_financial_field' ) );
+			add_filter( 'acf/update_value/name=' . $field_name, array( __CLASS__, 'protect_financial_field_update' ), 10, 3 );
 		}
 
 		foreach ( array_keys( self::$post_type_bases ) as $post_type ) {
@@ -164,6 +174,27 @@ final class HCOS_Security {
 
 	public static function prepare_financial_field( $field ) {
 		return current_user_can( 'hcos_view_finances' ) ? $field : false;
+	}
+
+	public static function protect_sensitive_field_update( $value, $post_id, $field ) {
+		return self::protect_restricted_field_update( $value, $post_id, $field, 'hcos_view_sensitive_notes' );
+	}
+
+	public static function protect_financial_field_update( $value, $post_id, $field ) {
+		return self::protect_restricted_field_update( $value, $post_id, $field, 'hcos_view_finances' );
+	}
+
+	private static function protect_restricted_field_update( $value, $post_id, $field, $capability ) {
+		if ( current_user_can( $capability ) ) {
+			return $value;
+		}
+
+		$field_name = isset( $field['name'] ) ? sanitize_key( $field['name'] ) : '';
+		if ( ! $field_name || ! is_numeric( $post_id ) ) {
+			return '';
+		}
+
+		return get_post_meta( absint( $post_id ), $field_name, true );
 	}
 
 	public static function protect_rest_request( $prepared_post, $request ) {

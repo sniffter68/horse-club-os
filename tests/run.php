@@ -11,6 +11,10 @@ function absint( $value ) {
 	return abs( (int) $value );
 }
 
+function sanitize_key( $value ) {
+	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $value ) );
+}
+
 function wp_timezone() {
 	return new DateTimeZone( 'Europe/Moscow' );
 }
@@ -125,6 +129,22 @@ class HCOS_Test_User {
 	public function has_cap( $capability ) { return $this->allowed && 'edit_hcos_lessons' === $capability; }
 }
 
+class HCOS_Test_Request {
+	private $params;
+
+	public function __construct( $params ) {
+		$this->params = $params;
+	}
+
+	public function get_param( $key ) {
+		return isset( $this->params[ $key ] ) ? $this->params[ $key ] : null;
+	}
+
+	public function set_param( $key, $value ) {
+		$this->params[ $key ] = $value;
+	}
+}
+
 hcos_assert_same( true, HCOS_Login::is_portal_path( '/', '/' ), 'Domain root must be recognized as the login portal.' );
 hcos_assert_same( true, HCOS_Login::is_portal_path( '/wordpress/', '/wordpress/' ), 'Subdirectory WordPress root must be recognized.' );
 hcos_assert_same( false, HCOS_Login::is_portal_path( '/wp-json/', '/' ), 'REST paths must not be treated as the login portal.' );
@@ -158,6 +178,59 @@ hcos_assert_same( array( 'X-Horse-Club: OS', 'Content-Type: text/html; charset=U
 $sensitive_fields = new ReflectionProperty( 'HCOS_Security', 'sensitive_fields' );
 $sensitive_fields->setAccessible( true );
 hcos_assert_same( true, in_array( 'lesson_comment', $sensitive_fields->getValue(), true ), 'Trainer must not see the lesson administrator comment.' );
+
+$booking_financial_fields = array(
+	'booking_tab_finance',
+	'booking_membership',
+	'booking_membership_operation',
+	'booking_membership_refund_operation',
+	'booking_charge_policy',
+	'booking_charge_result',
+	'booking_cancellation_hours_snapshot',
+	'booking_late_cancel_policy_snapshot',
+);
+$financial_fields = new ReflectionProperty( 'HCOS_Security', 'financial_fields' );
+$financial_fields->setAccessible( true );
+foreach ( $booking_financial_fields as $field_name ) {
+	hcos_assert_same( true, in_array( $field_name, $financial_fields->getValue(), true ), 'Trainer financial guard must include ' . $field_name . '.' );
+}
+
+$hcos_test_caps = array();
+hcos_assert_same( false, HCOS_Security::prepare_financial_field( array( 'name' => 'booking_membership' ) ), 'Trainer must not see booking membership controls.' );
+$hcos_test_meta[416]['booking_membership'] = 15;
+hcos_assert_same( 15, HCOS_Security::protect_financial_field_update( 99, 416, array( 'name' => 'booking_membership' ) ), 'Trainer admin form must preserve the stored membership.' );
+$hcos_test_meta[363]['client_admin_notes'] = 'Скрытая заметка';
+hcos_assert_same( 'Скрытая заметка', HCOS_Security::protect_sensitive_field_update( 'Изменено', 363, array( 'name' => 'client_admin_notes' ) ), 'Trainer admin form must preserve the stored administrator note.' );
+
+$trainer_rest_request = new HCOS_Test_Request(
+	array(
+		'acf' => array(
+			'booking_membership'    => 99,
+			'booking_charge_policy' => 'charge',
+			'booking_attendance'    => 'present',
+		),
+	)
+);
+HCOS_Security::protect_rest_request( new stdClass(), $trainer_rest_request );
+hcos_assert_same( array( 'booking_attendance' => 'present' ), $trainer_rest_request->get_param( 'acf' ), 'Trainer REST request must discard membership and charge changes.' );
+
+$trainer_rest_response       = new stdClass();
+$trainer_rest_response->data = array(
+	'acf' => array(
+		'booking_membership'    => 15,
+		'booking_charge_policy' => 'auto',
+		'booking_attendance'    => 'expected',
+	),
+);
+HCOS_Security::filter_rest_response( $trainer_rest_response, new stdClass(), $trainer_rest_request );
+hcos_assert_same( array( 'booking_attendance' => 'expected' ), $trainer_rest_response->data['acf'], 'Trainer REST response must not expose membership and charge fields.' );
+
+$hcos_test_caps = array( 'hcos_view_finances' => true );
+$manager_financial_field = array( 'name' => 'booking_membership' );
+hcos_assert_same( $manager_financial_field, HCOS_Security::prepare_financial_field( $manager_financial_field ), 'Manager must retain booking membership controls.' );
+hcos_assert_same( 99, HCOS_Security::protect_financial_field_update( 99, 416, $manager_financial_field ), 'Manager admin form must retain financial changes.' );
+$hcos_test_caps = array( 'hcos_view_finances' => true, 'hcos_view_sensitive_notes' => true );
+hcos_assert_same( 'Изменено', HCOS_Security::protect_sensitive_field_update( 'Изменено', 363, array( 'name' => 'client_admin_notes' ) ), 'Manager admin form must retain sensitive note changes.' );
 
 $attention = new ReflectionMethod( 'HCOS_Dashboard', 'attention' );
 $attention->setAccessible( true );
