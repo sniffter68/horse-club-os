@@ -250,7 +250,7 @@ final class HCOS_Admin {
 			'date'                   => isset( $columns['date'] ) ? $columns['date'] : 'Дата публикации',
 		);
 		if ( ! current_user_can( 'hcos_view_finances' ) ) {
-			unset( $new_columns['booking_payment_status'], $new_columns['booking_debt_amount'] );
+			unset( $new_columns['booking_charge_result'], $new_columns['booking_payment_status'], $new_columns['booking_debt_amount'] );
 		}
 		return $new_columns;
 	}
