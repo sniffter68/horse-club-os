@@ -19,6 +19,10 @@ function admin_url( $path = '' ) {
 	return 'https://crm.example.test/wp-admin/' . ltrim( $path, '/' );
 }
 
+function network_site_url( $path = '', $scheme = null ) {
+	return 'https://crm.example.test/' . ltrim( $path, '/' );
+}
+
 function current_user_can( $capability ) {
 	global $hcos_test_caps;
 	return ! empty( $hcos_test_caps[ $capability ] );
@@ -90,6 +94,7 @@ function update_option( $key, $value, $autoload = null ) {
 require_once dirname( __DIR__ ) . '/includes/class-hcos-attendance.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-payments.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-login.php';
+require_once dirname( __DIR__ ) . '/includes/class-hcos-mail.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-security.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-dashboard.php';
 
@@ -118,6 +123,22 @@ hcos_assert_same( false, HCOS_Login::is_portal_path( '/wp-json/', '/' ), 'REST p
 hcos_assert_same( true, HCOS_Login::can_use_portal( new HCOS_Test_User( true ) ), 'Horse Club OS staff capability must grant portal access.' );
 hcos_assert_same( false, HCOS_Login::can_use_portal( new HCOS_Test_User( false ) ), 'Unrelated WordPress users must not enter the portal.' );
 hcos_assert_same( 'https://crm.example.test/wp-admin/admin.php?page=hcos-dashboard', HCOS_Login::destination(), 'Successful login must open the Horse Club OS dashboard.' );
+
+$mail_user               = new stdClass();
+$mail_user->display_name = 'Инга Чернышова';
+$reset_message           = HCOS_Mail::filter_password_reset_message( '', 'test-key', 'Inga', $mail_user );
+hcos_assert_same( 'Союз любителей конного спорта', HCOS_Mail::filter_from_name( 'WordPress' ), 'Outgoing mail must use the club sender name.' );
+hcos_assert_same( 'Доступ в Horse Club OS', HCOS_Mail::filter_password_reset_title( '', 'Inga', $mail_user ), 'Password reset email must use the branded subject.' );
+hcos_assert_same( true, false !== strpos( $reset_message, 'Здравствуйте, Инга Чернышова!' ), 'Password reset email must address the user.' );
+hcos_assert_same( true, false !== strpos( $reset_message, 'action=rp&key=test-key&login=Inga' ), 'Password reset email must contain the WordPress reset URL.' );
+
+$mail_args = HCOS_Mail::format_password_reset_email(
+	array(
+		'subject' => HCOS_Mail::PASSWORD_RESET_TITLE,
+		'headers' => "Content-Type: text/plain\nX-Horse-Club: OS",
+	)
+);
+hcos_assert_same( array( 'X-Horse-Club: OS', 'Content-Type: text/html; charset=UTF-8' ), array_values( $mail_args['headers'] ), 'Password reset email must use one HTML content type header.' );
 
 $sensitive_fields = new ReflectionProperty( 'HCOS_Security', 'sensitive_fields' );
 $sensitive_fields->setAccessible( true );
