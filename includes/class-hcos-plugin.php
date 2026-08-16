@@ -20,6 +20,7 @@ final class HCOS_Plugin {
 	public function init() {
 		HCOS_Security::init();
 		HCOS_Login::init();
+		HCOS_Mail::init();
 		HCOS_Audit::init();
 		HCOS_Post_Types::init();
 		HCOS_ACF::init();

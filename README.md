@@ -96,10 +96,10 @@
 - правила защиты данных: `SECURITY.md`;
 - безопасное обновление и откат: `docs/SAFE-UPDATE.md`;
 - план пилотной эксплуатации и критерии готовности: `docs/PILOT.md`;
-- локальная сборка: `powershell -ExecutionPolicy Bypass -File .\scripts\build-release.ps1 -Version 0.28.1`;
+- локальная сборка: `powershell -ExecutionPolicy Bypass -File .\scripts\build-release.ps1 -Version 0.28.2`;
 - регрессионные проверки: `php .\tests\run.php`;
 - GitHub Actions проверяет PHP 7.4 и 8.3 при каждом push и pull request;
-- тег вида `v0.28.1` запускает проверку и создаёт устанавливаемый ZIP как артефакт Actions.
+- тег вида `v0.28.2` запускает проверку и создаёт устанавливаемый ZIP как артефакт Actions.
 
 ## Ограничения MVP
 
