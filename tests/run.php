@@ -15,6 +15,10 @@ function sanitize_key( $value ) {
 	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $value ) );
 }
 
+function wp_unslash( $value ) {
+	return $value;
+}
+
 function wp_timezone() {
 	return new DateTimeZone( 'Europe/Moscow' );
 }
@@ -110,6 +114,7 @@ require_once dirname( __DIR__ ) . '/includes/class-hcos-mail.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-security.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-admin.php';
 require_once dirname( __DIR__ ) . '/includes/class-hcos-dashboard.php';
+require_once dirname( __DIR__ ) . '/includes/class-hcos-lesson-validation.php';
 
 function hcos_assert_same( $expected, $actual, $message ) {
 	if ( $expected !== $actual ) {
@@ -192,6 +197,25 @@ $hcos_test_options['updraft_interval'] = 'weekly';
 $hcos_test_options['updraft_service']  = array();
 hcos_assert_same( false, HCOS_Security::has_automatic_remote_backup(), 'Backups without remote storage must retain the warning.' );
 $hcos_test_options = array();
+
+$hcos_test_meta[30] = array(
+	'service_capacity' => 1,
+	'service_duration' => 45,
+	'service_price'    => 2000,
+);
+$_POST['acf']       = array( 'field_hcos_lesson_service' => 30 );
+hcos_assert_same( true, HCOS_Lesson_Validation::validate_lesson_capacity( true, '', array(), '' ), 'Lesson capacity may inherit a configured service capacity.' );
+hcos_assert_same( true, HCOS_Lesson_Validation::validate_lesson_price( true, '', array(), '' ), 'Lesson price may inherit a configured service price.' );
+$hcos_test_meta[30]['service_capacity'] = '';
+$hcos_test_meta[30]['service_price']    = '';
+hcos_assert_same( 'Укажите вместимость занятия или выберите услугу с заполненной вместимостью.', HCOS_Lesson_Validation::validate_lesson_capacity( true, '', array(), '' ), 'Lesson without capacity or a service default must be rejected.' );
+hcos_assert_same( 'Укажите цену занятия или выберите услугу с заполненной базовой стоимостью.', HCOS_Lesson_Validation::validate_lesson_price( true, '', array(), '' ), 'Lesson without price or a service default must be rejected.' );
+hcos_assert_same( true, HCOS_Lesson_Validation::validate_lesson_price( true, '0', array(), '' ), 'A free lesson price must remain valid.' );
+hcos_assert_same( 'Укажите продолжительность услуги больше нуля.', HCOS_Lesson_Validation::validate_service_duration( true, '', array(), '' ), 'Service duration is required.' );
+hcos_assert_same( 'Укажите максимум участников не меньше одного.', HCOS_Lesson_Validation::validate_service_capacity( true, 0, array(), '' ), 'Service capacity is required.' );
+hcos_assert_same( 'Укажите базовую стоимость услуги. Для бесплатной услуги укажите 0.', HCOS_Lesson_Validation::validate_service_price( true, '', array(), '' ), 'Service price is required.' );
+hcos_assert_same( true, HCOS_Lesson_Validation::validate_service_price( true, '0', array(), '' ), 'A free service price must remain valid.' );
+unset( $_POST['acf'] );
 
 $booking_financial_fields = array(
 	'booking_tab_finance',

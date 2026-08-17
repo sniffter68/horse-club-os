@@ -12,6 +12,66 @@ final class HCOS_Lesson_Validation {
 
 	public static function init() {
 		add_filter( 'acf/validate_value/name=lesson_time', array( __CLASS__, 'validate_schedule' ), 10, 4 );
+		add_filter( 'acf/validate_value/name=lesson_capacity', array( __CLASS__, 'validate_lesson_capacity' ), 10, 4 );
+		add_filter( 'acf/validate_value/name=lesson_price', array( __CLASS__, 'validate_lesson_price' ), 10, 4 );
+		add_filter( 'acf/validate_value/name=service_duration', array( __CLASS__, 'validate_service_duration' ), 10, 4 );
+		add_filter( 'acf/validate_value/name=service_capacity', array( __CLASS__, 'validate_service_capacity' ), 10, 4 );
+		add_filter( 'acf/validate_value/name=service_price', array( __CLASS__, 'validate_service_price' ), 10, 4 );
+	}
+
+	public static function validate_lesson_capacity( $valid, $value, $field, $input ) {
+		if ( true !== $valid || absint( $value ) > 0 ) {
+			return $valid;
+		}
+
+		$service_id = self::submitted_service_id();
+		if ( $service_id && absint( get_post_meta( $service_id, 'service_capacity', true ) ) > 0 ) {
+			return $valid;
+		}
+
+		return 'Укажите вместимость занятия или выберите услугу с заполненной вместимостью.';
+	}
+
+	public static function validate_lesson_price( $valid, $value, $field, $input ) {
+		if ( true !== $valid ) {
+			return $valid;
+		}
+
+		if ( self::is_non_negative_number( $value ) ) {
+			return $valid;
+		}
+
+		$service_id    = self::submitted_service_id();
+		$service_price = $service_id ? get_post_meta( $service_id, 'service_price', true ) : '';
+		if ( self::is_non_negative_number( $service_price ) ) {
+			return $valid;
+		}
+
+		return 'Укажите цену занятия или выберите услугу с заполненной базовой стоимостью.';
+	}
+
+	public static function validate_service_duration( $valid, $value, $field, $input ) {
+		if ( true !== $valid || absint( $value ) > 0 ) {
+			return $valid;
+		}
+
+		return 'Укажите продолжительность услуги больше нуля.';
+	}
+
+	public static function validate_service_capacity( $valid, $value, $field, $input ) {
+		if ( true !== $valid || absint( $value ) > 0 ) {
+			return $valid;
+		}
+
+		return 'Укажите максимум участников не меньше одного.';
+	}
+
+	public static function validate_service_price( $valid, $value, $field, $input ) {
+		if ( true !== $valid || self::is_non_negative_number( $value ) ) {
+			return $valid;
+		}
+
+		return 'Укажите базовую стоимость услуги. Для бесплатной услуги укажите 0.';
 	}
 
 	public static function validate_schedule( $valid, $value, $field, $input ) {
@@ -135,5 +195,18 @@ final class HCOS_Lesson_Validation {
 
 	private static function display_date( $date ) {
 		return substr( $date, 0, 4 ) . '-' . substr( $date, 4, 2 ) . '-' . substr( $date, 6, 2 );
+	}
+
+	private static function submitted_service_id() {
+		if ( ! isset( $_POST['acf'] ) || ! is_array( $_POST['acf'] ) ) {
+			return 0;
+		}
+
+		$acf = wp_unslash( $_POST['acf'] );
+		return is_array( $acf ) && isset( $acf['field_hcos_lesson_service'] ) ? absint( $acf['field_hcos_lesson_service'] ) : 0;
+	}
+
+	private static function is_non_negative_number( $value ) {
+		return '' !== trim( (string) $value ) && is_numeric( $value ) && (float) $value >= 0;
 	}
 }
