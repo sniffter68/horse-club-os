@@ -180,6 +180,19 @@ $sensitive_fields = new ReflectionProperty( 'HCOS_Security', 'sensitive_fields' 
 $sensitive_fields->setAccessible( true );
 hcos_assert_same( true, in_array( 'lesson_comment', $sensitive_fields->getValue(), true ), 'Trainer must not see the lesson administrator comment.' );
 
+$hcos_test_options = array(
+	'updraft_interval'          => 'weekly',
+	'updraft_interval_database' => 'daily',
+	'updraft_service'           => array( 'googledrive' ),
+);
+hcos_assert_same( true, HCOS_Security::has_automatic_remote_backup(), 'Scheduled file and database backups with remote storage must suppress the warning.' );
+$hcos_test_options['updraft_interval'] = 'manual';
+hcos_assert_same( false, HCOS_Security::has_automatic_remote_backup(), 'Manual file backups must retain the warning.' );
+$hcos_test_options['updraft_interval'] = 'weekly';
+$hcos_test_options['updraft_service']  = array();
+hcos_assert_same( false, HCOS_Security::has_automatic_remote_backup(), 'Backups without remote storage must retain the warning.' );
+$hcos_test_options = array();
+
 $booking_financial_fields = array(
 	'booking_tab_finance',
 	'booking_membership',

@@ -271,10 +271,27 @@ final class HCOS_Security {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
+		if ( self::has_automatic_remote_backup() ) {
+			return;
+		}
 		$screen = get_current_screen();
 		if ( ! $screen || false === strpos( $screen->id, 'hcos' ) ) {
 			return;
 		}
 		echo '<div class="notice notice-warning"><p><strong>Horse Club OS:</strong> настройте внешнюю резервную копию базы данных и wp-content, затем проверьте восстановление. Инструкция: Инструменты → Безопасность Horse Club OS.</p></div>';
+	}
+
+	public static function has_automatic_remote_backup() {
+		$file_interval     = get_option( 'updraft_interval' );
+		$database_interval = get_option( 'updraft_interval_database' );
+		$remote_services   = array_filter( (array) get_option( 'updraft_service' ) );
+
+		return self::is_automatic_backup_interval( $file_interval )
+			&& self::is_automatic_backup_interval( $database_interval )
+			&& ! empty( $remote_services );
+	}
+
+	private static function is_automatic_backup_interval( $interval ) {
+		return is_string( $interval ) && ! in_array( $interval, array( '', 'manual' ), true );
 	}
 }
