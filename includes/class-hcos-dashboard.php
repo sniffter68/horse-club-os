@@ -4,6 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class HCOS_Dashboard {
 	private static $hook = '';
+	private static $settings_hook = '';
 
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ), 5 );
@@ -12,10 +13,11 @@ final class HCOS_Dashboard {
 
 	public static function register_page() {
 		self::$hook = add_menu_page( 'Horse Club OS', 'Horse Club OS', 'edit_hcos_lessons', 'hcos-dashboard', array( __CLASS__, 'render_page' ), 'dashicons-admin-home', 2 );
+		self::$settings_hook = add_submenu_page( 'hcos-dashboard', 'Настройки Horse Club OS', 'Настройки', 'manage_options', 'hcos-settings', array( __CLASS__, 'render_settings_page' ) );
 	}
 
 	public static function enqueue_assets( $hook ) {
-		if ( self::$hook === $hook ) {
+		if ( in_array( $hook, array( self::$hook, self::$settings_hook ), true ) ) {
 			wp_enqueue_style( 'hcos-dashboard', plugins_url( 'assets/css/admin-dashboard.css', HCOS_PLUGIN_FILE ), array(), HCOS_VERSION );
 		}
 	}
@@ -42,6 +44,32 @@ final class HCOS_Dashboard {
 		<?php
 	}
 
+	public static function render_settings_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Недостаточно прав для просмотра настроек.', 'horse-club-os' ) );
+		}
+
+		$cards = array(
+			array( 'Основные настройки', 'Название клуба, адрес WordPress, язык, часовой пояс и формат дат.', admin_url( 'options-general.php' ), 'Открыть основные настройки' ),
+			array( 'Пользователи и роли', 'Администраторы, тренеры, пароли и доступ сотрудников к разделам CRM.', admin_url( 'users.php' ), 'Управлять пользователями' ),
+			array( 'Почта', 'Отправитель и SMTP-соединение для писем и восстановления пароля.', admin_url( 'options-general.php?page=fluent-mail#/connections' ), 'Открыть настройки почты' ),
+			array( 'Резервные копии', 'Расписание копирования базы и файлов, удалённое хранилище и восстановление.', admin_url( 'options-general.php?page=updraftplus' ), 'Открыть резервные копии' ),
+		);
+		?>
+		<div class="hcos-app hcos-settings-app">
+			<?php self::sidebar( 'settings' ); ?>
+			<main class="hcos-main hcos-settings-main">
+				<header class="hcos-header"><div><h1>Настройки</h1><p>Системные параметры Horse Club OS</p></div></header>
+				<section class="hcos-settings-grid">
+					<?php foreach ( $cards as $card ) : ?>
+						<article class="hcos-settings-card"><h2><?php echo esc_html( $card[0] ); ?></h2><p><?php echo esc_html( $card[1] ); ?></p><a href="<?php echo esc_url( $card[2] ); ?>"><?php echo esc_html( $card[3] ); ?> →</a></article>
+					<?php endforeach; ?>
+				</section>
+			</main>
+		</div>
+		<?php
+	}
+
 	public static function sidebar( $active = 'dashboard' ) {
 		$user  = wp_get_current_user();
 		$name  = $user->display_name ?: $user->user_login;
@@ -62,7 +90,7 @@ final class HCOS_Dashboard {
 			<div class="hcos-brand"><span class="hcos-brand-mark">H</span><span><strong>Horse Club</strong><small>OS</small></span></div>
 			<nav class="hcos-nav" aria-label="Разделы CRM">
 				<?php foreach ( $links as $link ) : ?><?php if ( in_array( $link[0], array( 'memberships', 'payments', 'reports' ), true ) && ! current_user_can( 'hcos_view_finances' ) ) { continue; } ?><a class="<?php echo $active === $link[0] ? 'is-active' : ''; ?>" href="<?php echo esc_url( $link[2] ); ?>"><i></i><?php echo esc_html( $link[1] ); ?></a><?php endforeach; ?>
-				<span class="hcos-nav-divider"></span><a href="<?php echo esc_url( current_user_can( 'manage_options' ) ? admin_url( 'options-general.php' ) : admin_url( 'profile.php' ) ); ?>"><i></i>Настройки</a><a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"><i></i>Выйти</a>
+				<span class="hcos-nav-divider"></span><a class="<?php echo 'settings' === $active ? 'is-active' : ''; ?>" href="<?php echo esc_url( current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=hcos-settings' ) : admin_url( 'profile.php' ) ); ?>"><i></i>Настройки</a><a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"><i></i>Выйти</a>
 			</nav>
 			<a class="hcos-user" href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>"><span class="hcos-avatar"><?php echo esc_html( self::initials( $name ) ); ?></span><span><strong><?php echo esc_html( $name ); ?></strong><small><?php echo in_array( HCOS_Security::TRAINER_ROLE, (array) $user->roles, true ) ? 'Тренер' : 'Администратор'; ?></small></span></a>
 		</aside>

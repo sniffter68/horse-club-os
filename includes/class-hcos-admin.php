@@ -4,6 +4,8 @@ defined( 'ABSPATH' ) || exit;
 
 final class HCOS_Admin {
 	public static function init() {
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_unified_assets' ), 100 );
+		add_filter( 'admin_body_class', array( __CLASS__, 'admin_body_class' ) );
 		add_filter( 'manage_clients_posts_columns', array( __CLASS__, 'client_columns' ) );
 		add_action( 'manage_clients_posts_custom_column', array( __CLASS__, 'render_client_column' ), 10, 2 );
 		add_filter( 'manage_horses_posts_columns', array( __CLASS__, 'horse_columns' ) );
@@ -24,6 +26,54 @@ final class HCOS_Admin {
 		add_action( 'manage_membership_ops_posts_custom_column', array( __CLASS__, 'render_membership_operation_column' ), 10, 2 );
 		add_filter( 'manage_payments_posts_columns', array( __CLASS__, 'payment_columns' ) );
 		add_action( 'manage_payments_posts_custom_column', array( __CLASS__, 'render_payment_column' ), 10, 2 );
+	}
+
+	public static function enqueue_unified_assets() {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! self::is_hcos_screen( $screen ) ) {
+			return;
+		}
+
+		wp_enqueue_style( 'hcos-dashboard', plugins_url( 'assets/css/admin-dashboard.css', HCOS_PLUGIN_FILE ), array(), HCOS_VERSION );
+		wp_enqueue_style( 'hcos-admin-unified', plugins_url( 'assets/css/admin-unified.css', HCOS_PLUGIN_FILE ), array( 'hcos-dashboard' ), HCOS_VERSION );
+	}
+
+	public static function admin_body_class( $classes ) {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( self::is_native_hcos_screen( $screen ) ) {
+			$classes .= ' hcos-native-admin';
+		}
+
+		return $classes;
+	}
+
+	private static function is_hcos_screen( $screen ) {
+		if ( ! $screen ) {
+			return false;
+		}
+
+		return self::is_native_hcos_screen( $screen ) || false !== strpos( (string) $screen->id, 'hcos-' );
+	}
+
+	private static function is_native_hcos_screen( $screen ) {
+		if ( ! $screen ) {
+			return false;
+		}
+
+		$post_types = array(
+			'clients',
+			'horses',
+			'trainers',
+			'services',
+			'lessons',
+			'bookings',
+			'pricing_plans',
+			'memberships',
+			'membership_ops',
+			'payments',
+		);
+
+		return in_array( (string) $screen->post_type, $post_types, true );
 	}
 
 	public static function client_columns( $columns ) {
