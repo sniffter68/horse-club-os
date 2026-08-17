@@ -1,0 +1,394 @@
+/* Shared visual language for every Horse Club OS admin screen. */
+:root {
+	--hcos-surface: #fff;
+	--hcos-surface-soft: #fbfaf7;
+	--hcos-control: #dad7ce;
+	--hcos-shadow: 0 10px 30px rgba(31, 74, 59, .06);
+	--hcos-radius: 14px;
+	--hcos-control-radius: 9px;
+}
+
+/* Custom CRM screens: keep repeated components visually identical. */
+.hcos-app :is(
+	.hcos-client-summary,
+	.hcos-bookings-summary,
+	.hcos-horses-summary,
+	.hcos-trainers-summary,
+	.hcos-services-summary,
+	.hcos-memberships-summary,
+	.hcos-payments-summary,
+	.hcos-report-cards
+) {
+	gap: 16px;
+	margin-bottom: 20px;
+}
+
+.hcos-app :is(
+	.hcos-client-stat,
+	.hcos-bookings-stat,
+	.hcos-horses-stat,
+	.hcos-trainers-stat,
+	.hcos-services-stat,
+	.hcos-memberships-stat,
+	.hcos-payments-stat,
+	.hcos-report-card,
+	.hcos-metric
+) {
+	background: var(--hcos-surface);
+	border: 1px solid var(--hcos-line);
+	border-radius: var(--hcos-radius);
+	box-shadow: none;
+}
+
+.hcos-app :is(
+	.hcos-client-filters,
+	.hcos-bookings-filters,
+	.hcos-calendar-filters,
+	.hcos-horses-filters,
+	.hcos-trainers-filters,
+	.hcos-services-filters,
+	.hcos-memberships-filters,
+	.hcos-payments-filters,
+	.hcos-report-filter
+) {
+	background: var(--hcos-surface);
+	border: 1px solid var(--hcos-line);
+	border-radius: var(--hcos-radius);
+	box-shadow: none;
+}
+
+.hcos-app :is(
+	.hcos-client-filters,
+	.hcos-bookings-filters,
+	.hcos-calendar-filters,
+	.hcos-horses-filters,
+	.hcos-trainers-filters,
+	.hcos-services-filters,
+	.hcos-memberships-filters,
+	.hcos-payments-filters,
+	.hcos-report-filter
+) :is(input, select) {
+	min-height: 42px;
+	border: 1px solid var(--hcos-control);
+	border-radius: var(--hcos-control-radius);
+	background-color: var(--hcos-surface);
+	color: var(--hcos-ink);
+	box-shadow: none;
+}
+
+.hcos-app :is(
+	.hcos-client-filters,
+	.hcos-bookings-filters,
+	.hcos-calendar-filters,
+	.hcos-horses-filters,
+	.hcos-trainers-filters,
+	.hcos-services-filters,
+	.hcos-memberships-filters,
+	.hcos-payments-filters,
+	.hcos-report-filter
+) :is(input, select):focus {
+	border-color: var(--hcos-green-soft);
+	box-shadow: 0 0 0 2px rgba(49, 100, 80, .14);
+	outline: 0;
+}
+
+.hcos-app :is(
+	.hcos-client-panel,
+	.hcos-bookings-panel,
+	.hcos-horses-panel,
+	.hcos-trainers-panel,
+	.hcos-services-panel,
+	.hcos-memberships-panel,
+	.hcos-payments-panel,
+	.hcos-report-panel,
+	.hcos-panel
+) {
+	background: var(--hcos-surface);
+	border: 1px solid var(--hcos-line);
+	border-radius: 16px;
+	box-shadow: none;
+}
+
+.hcos-app :is(
+	.hcos-client-table,
+	.hcos-bookings-table,
+	.hcos-horses-table,
+	.hcos-trainers-table,
+	.hcos-services-table,
+	.hcos-memberships-table,
+	.hcos-payments-table,
+	.hcos-report-panel table
+) th {
+	color: var(--hcos-sub);
+	font-size: 10px;
+	font-weight: 650;
+	letter-spacing: .045em;
+	text-transform: uppercase;
+}
+
+.hcos-app :is(
+	.hcos-client-table,
+	.hcos-bookings-table,
+	.hcos-horses-table,
+	.hcos-trainers-table,
+	.hcos-services-table,
+	.hcos-memberships-table,
+	.hcos-payments-table,
+	.hcos-report-panel table
+) tbody tr:hover {
+	background: var(--hcos-surface-soft);
+}
+
+.hcos-app :is(
+	.hcos-secondary-button,
+	.hcos-bookings-secondary,
+	.hcos-calendar-secondary,
+	.hcos-horses-secondary,
+	.hcos-trainers-secondary,
+	.hcos-services-secondary,
+	.hcos-memberships-secondary,
+	.hcos-payments-secondary,
+	.hcos-reports-secondary
+) {
+	min-height: 42px;
+	padding: 0 18px;
+	border: 1px solid var(--hcos-control);
+	border-radius: 10px;
+	background: var(--hcos-surface);
+	color: var(--hcos-green);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.hcos-app :is(
+	.hcos-secondary-button,
+	.hcos-bookings-secondary,
+	.hcos-calendar-secondary,
+	.hcos-horses-secondary,
+	.hcos-trainers-secondary,
+	.hcos-services-secondary,
+	.hcos-memberships-secondary,
+	.hcos-payments-secondary,
+	.hcos-reports-secondary
+):hover {
+	border-color: var(--hcos-green-soft);
+	color: var(--hcos-green);
+}
+
+/* Native WordPress list and edit screens for CRM entities. */
+body.hcos-native-admin {
+	background: var(--hcos-cream);
+	color: var(--hcos-ink);
+}
+
+body.hcos-native-admin #wpcontent,
+body.hcos-native-admin #wpbody-content {
+	background: var(--hcos-cream);
+}
+
+body.hcos-native-admin #wpbody-content > .wrap {
+	margin: 24px 24px 0 20px;
+}
+
+body.hcos-native-admin .wrap > h1,
+body.hcos-native-admin .wrap > .wp-heading-inline {
+	color: var(--hcos-ink);
+	font-size: 28px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+body.hcos-native-admin .page-title-action,
+body.hcos-native-admin .wrap .button-primary,
+body.hcos-native-admin #publishing-action .button-primary {
+	min-height: 40px;
+	padding: 0 18px;
+	border: 0;
+	border-radius: 9px;
+	background: var(--hcos-green);
+	color: #fff;
+	font-weight: 600;
+	box-shadow: none;
+}
+
+body.hcos-native-admin .page-title-action:hover,
+body.hcos-native-admin .wrap .button-primary:hover,
+body.hcos-native-admin #publishing-action .button-primary:hover {
+	background: var(--hcos-green-soft);
+	color: #fff;
+}
+
+body.hcos-native-admin .wrap .button:not(.button-primary),
+body.hcos-native-admin .tablenav .button,
+body.hcos-native-admin .acf-button {
+	min-height: 38px;
+	padding: 0 15px;
+	border-color: var(--hcos-control);
+	border-radius: 9px;
+	background: var(--hcos-surface);
+	color: var(--hcos-green);
+	box-shadow: none;
+}
+
+body.hcos-native-admin :is(
+	.wp-list-table,
+	.postbox,
+	.stuffbox,
+	#post-status-info,
+	.acf-postbox,
+	.notice
+) {
+	border: 1px solid var(--hcos-line);
+	border-radius: var(--hcos-radius);
+	background: var(--hcos-surface);
+	box-shadow: none;
+}
+
+body.hcos-native-admin .wp-list-table {
+	overflow: hidden;
+	border-spacing: 0;
+}
+
+body.hcos-native-admin .wp-list-table thead th,
+body.hcos-native-admin .wp-list-table tfoot th {
+	background: var(--hcos-surface-soft);
+	color: var(--hcos-sub);
+	font-size: 11px;
+	font-weight: 650;
+	letter-spacing: .025em;
+}
+
+body.hcos-native-admin .wp-list-table tbody tr:hover {
+	background: var(--hcos-surface-soft);
+}
+
+body.hcos-native-admin .postbox .postbox-header,
+body.hcos-native-admin .stuffbox .postbox-header {
+	border-bottom: 1px solid var(--hcos-line);
+}
+
+body.hcos-native-admin .postbox .hndle,
+body.hcos-native-admin .stuffbox .hndle {
+	padding: 14px 16px;
+	color: var(--hcos-ink);
+	font-size: 15px;
+}
+
+body.hcos-native-admin .acf-fields > .acf-field {
+	padding: 18px;
+	border-color: var(--hcos-line);
+}
+
+body.hcos-native-admin :is(input[type="text"], input[type="email"], input[type="number"], input[type="search"], input[type="date"], input[type="time"], select, textarea),
+body.hcos-native-admin .select2-selection {
+	border-color: var(--hcos-control);
+	border-radius: var(--hcos-control-radius);
+	background: var(--hcos-surface);
+	color: var(--hcos-ink);
+	box-shadow: none;
+}
+
+body.hcos-native-admin :is(input, select, textarea):focus,
+body.hcos-native-admin .select2-container--focus .select2-selection {
+	border-color: var(--hcos-green-soft);
+	box-shadow: 0 0 0 2px rgba(49, 100, 80, .14);
+	outline: 0;
+}
+
+body.hcos-native-admin .subsubsub a,
+body.hcos-native-admin .row-actions a,
+body.hcos-native-admin .wp-list-table a {
+	color: var(--hcos-green);
+}
+
+body.hcos-native-admin .subsubsub a.current {
+	color: var(--hcos-ink);
+}
+
+body.hcos-native-admin .tablenav,
+body.hcos-native-admin .search-box {
+	color: var(--hcos-sub);
+}
+
+body.hcos-native-admin #titlediv #title {
+	min-height: 52px;
+	padding: 0 15px;
+	border-radius: 11px;
+	font-size: 20px;
+}
+
+body.hcos-native-admin .acf-tab-wrap.-top .acf-tab-group {
+	border-color: var(--hcos-line);
+	background: var(--hcos-surface-soft);
+}
+
+body.hcos-native-admin .acf-tab-group li a {
+	color: var(--hcos-sub);
+}
+
+body.hcos-native-admin .acf-tab-group li.active a {
+	border-color: var(--hcos-line);
+	background: var(--hcos-surface);
+	color: var(--hcos-green);
+}
+
+/* Settings hub. */
+.hcos-settings-main {
+	overflow: hidden;
+}
+
+.hcos-settings-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 18px;
+}
+
+.hcos-settings-card {
+	min-height: 150px;
+	padding: 22px;
+	border: 1px solid var(--hcos-line);
+	border-radius: 16px;
+	background: var(--hcos-surface);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.hcos-settings-card h2 {
+	margin: 0 0 8px;
+	font-size: 18px;
+}
+
+.hcos-settings-card p {
+	margin: 0 0 22px;
+	color: var(--hcos-sub);
+	font-size: 12px;
+	line-height: 1.6;
+}
+
+.hcos-settings-card a {
+	margin-top: auto;
+	color: var(--hcos-green);
+	font-size: 12px;
+	font-weight: 650;
+	text-decoration: none;
+}
+
+@media (max-width: 782px) {
+	body.hcos-native-admin #wpbody-content > .wrap {
+		margin: 18px 12px 0;
+	}
+
+	body.hcos-native-admin .wrap > h1,
+	body.hcos-native-admin .wrap > .wp-heading-inline {
+		font-size: 24px;
+	}
+
+	.hcos-settings-grid {
+		grid-template-columns: 1fr;
+	}
+}
